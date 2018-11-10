@@ -7,6 +7,7 @@
 
 // Libraries
 #include <Ultrasonic.h>
+#include <FastLED.h>
 #include <ArduinoJson.h>
 
 // Pin Defnition
@@ -33,10 +34,16 @@
 #define instrument3_Note2 3
 #define instrument3_Note3 4
 
+// LED Strip
+#define LEDPin 5
+#define NUM_LEDS 60
+
 // Objects
 Ultrasonic us1(us1TrigPin, us1EchoPin);
 Ultrasonic us2(us2TrigPin, us2EchoPin);
 Ultrasonic us3(us3TrigPin, us3EchoPin);
+
+CRGB leds[NUM_LEDS];
 
 // Variables
 int distance1,distance2,distance3;
@@ -47,6 +54,8 @@ int instrument3[3];
 // Sampling
 unsigned long lastRead;
 const int sampleRate = 200;
+unsigned long lastLEDRead;
+const int sampleRateLED = 500;
 
 void setup() {
   // Initialize serial communications
@@ -67,6 +76,8 @@ void setup() {
   distance1 = 1000;
   distance2 = 1000;
   distance3 = 1000;
+  
+  FastLED.addLeds<WS2812, LEDPin, GRB>(leds, NUM_LEDS);
 }
  
 void loop() {
@@ -142,5 +153,63 @@ void loop() {
     Serial.println();                                       // Print a \n character to the serial port to distinguish between objects
     
     lastRead = millis();
+  }
+
+
+  if (millis() - lastLEDRead >= sampleRateLED){
+    
+    // LEDs
+    //-------------------------------- instrument 1 --------------------------------//
+    if ( instrument1[0] == 1 || instrument1[1] == 1 || instrument1[2] == 1 ) {
+      for (int i = 0; i <= 60; i++) {
+        leds[i] = CRGB ( 255, 0, 0);
+        FastLED.show();
+      }
+      for (int i = 60; i >= 0; i--) {
+        leds[i] = CRGB ( 0, 0, 0);
+        FastLED.show();
+      }
+    } 
+    //-------------------------------- instrument 2 --------------------------------//
+    else if ( instrument2[0] == 1 || instrument2[1] == 1 || instrument2[2] == 1 ) {
+      for (int i = 0; i <= 60; i++) {
+        leds[i] = CRGB ( 0, 0, 255);
+        FastLED.show();
+      }
+      for (int i = 60; i >= 0; i--) {
+        leds[i] = CRGB ( 0, 0, 0);
+        FastLED.show();
+      }
+    } 
+    //-------------------------------- instrument 3 --------------------------------//
+    else if ( instrument3[0] == 1 || instrument3[1] == 1 || instrument3[2] == 1 ){
+      for (int i = 0; i <= 60; i++) {
+        leds[i] = CRGB ( 0, 255, 0);
+        FastLED.show();
+      }
+      for (int i = 60; i >= 0; i--) {
+        leds[i] = CRGB ( 0, 0, 0);
+        FastLED.show();
+      }
+    } 
+    //--------------------- distance under 150, engage audience ---------------------//
+    else if ( distance1 <= 150 || distance2 <= 150 || distance3 <= 150 ) {
+      for (int i = 0; i <= 20; i++) {
+        leds[i] = CRGB ( 255, 255, 255);
+        FastLED.show();
+      }
+      for (int i = 20; i >= 0; i--) {
+        leds[i] = CRGB ( 0, 0, 0);
+        FastLED.show();
+      }
+    } 
+    //----------------------------- Turn everything off -----------------------------//
+    else{ 
+      for (int i = 60; i >= 0; i--) {
+        leds[i] = CRGB ( 0, 0, 0);
+        FastLED.show();
+      }
+    }
+    lastLEDRead = millis();
   }
 }
