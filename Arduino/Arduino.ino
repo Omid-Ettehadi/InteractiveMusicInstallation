@@ -46,10 +46,7 @@ int instrument3[3];
 
 // Sampling
 unsigned long lastRead;
-const int sampleRate = 250;
-unsigned long dataLastRead;
-const int dataSampleRate = 250;
-
+const int sampleRate = 200;
 
 void setup() {
   // Initialize serial communications
@@ -67,70 +64,62 @@ void setup() {
   pinMode(instrument3_Note3, INPUT_PULLUP);
 
   // Initialize all variables
-  distance1 = 0;
-  distance2 = 0;
-  distance3 = 0;
+  distance1 = 1000;
+  distance2 = 1000;
+  distance3 = 1000;
 }
  
 void loop() {
-  if(millis() - lastRead >= sampleRate){
-    
+  if (millis() - lastRead >= sampleRate) {
+
+    // Read distances
     distance1 = us1.distanceRead(); 
     distance2 = us2.distanceRead(); 
     distance3 = us3.distanceRead();
 
-    /*for (int i = 0; i<3; i++){
-      instrument1[i] = digitalRead("instrument1_Note"+i);
-      instrument2[i] = digitalRead("instrument2_Note"+i);
-      instrument3[i] = digitalRead("instrument3_Note"+i);
-    }*/
+    // Filter distances and get rid of anything under 5
+    if ( distance1 <= 5 ){distance1 = 1000;}
+    if ( distance2 <= 5 ){distance2 = 1000;}
+    if ( distance3 <= 5 ){distance3 = 1000;}
+
+    // Read instrument's keys
+    // Zero is Off, 1 is On
+    //---------------- instrument 1 ----------------//
     instrument1[0] = digitalRead(instrument1_Note1);
     instrument1[1] = digitalRead(instrument1_Note2);
     instrument1[2] = digitalRead(instrument1_Note3);
-
+    for ( int i = 0; i<3; i++){
+      if (instrument1[i] == 0) {
+        instrument1[i] = 1;
+      } else {
+        instrument1[i] = 0;
+      }
+    }
+    //---------------- instrument 2 ----------------//
     instrument2[0] = digitalRead(instrument2_Note1);
     instrument2[1] = digitalRead(instrument2_Note2);
     instrument2[2] = digitalRead(instrument2_Note3);
-
+    for ( int i = 0; i<3; i++){
+      if (instrument2[i] == 0) {
+        instrument2[i] = 1;
+      } else {
+        instrument2[i] = 0;
+      }
+    }
+    //---------------- instrument 3 ----------------//
     instrument3[0] = digitalRead(instrument3_Note1);
     instrument3[1] = digitalRead(instrument3_Note2);
     instrument3[2] = digitalRead(instrument3_Note3);
+    for ( int i = 0; i<3; i++){
+      if (instrument3[i] == 0) {
+        instrument3[i] = 1;
+      } else {
+        instrument3[i] = 0;
+      }
+    }
 
-    /*
-    Serial.print(distance1);
-    Serial.print("\n");
-    Serial.print(distance2);
-    Serial.print("\n");
-    Serial.print(distance3);
-    Serial.print("\n");
-    Serial.print("\n");
-
-    Serial.print(instrument1[0]);
-    Serial.print(",");
-    Serial.print(instrument1[1]);
-    Serial.print(",");
-    Serial.print(instrument1[2]);
-    Serial.print("\n");
-    Serial.print(instrument2[0]);
-    Serial.print(",");
-    Serial.print(instrument2[1]);
-    Serial.print(",");
-    Serial.print(instrument2[2]);
-    Serial.print("\n");
-    Serial.print(instrument3[0]);
-    Serial.print(",");
-    Serial.print(instrument3[1]);
-    Serial.print(",");
-    Serial.print(instrument3[2]);
-    Serial.print("\n");
-    */
-    
-    lastRead = millis();
-  }
-
-  
-  if(millis() - dataLastRead >= dataSampleRate){
-    DynamicJsonBuffer messageBuffer(200);                   // Create the Buffer for the JSON object        
+    // Send data to P5
+    DynamicJsonBuffer messageBuffer(1000);                  // Create the Buffer for the JSON object        
     JsonObject& p5Send = messageBuffer.createObject();      // Create a JsonObject variable in that buffer       
   
     p5Send["us1"] = distance1;                              // Assign distance1 to the key "us1" in the json object
@@ -149,9 +138,9 @@ void loop() {
     p5Send["instrument3_Note2"] = instrument3[1];           // Assign instrument3[1] to the key "instrument3_Note2" in the json object 
     p5Send["instrument3_Note3"] = instrument3[2];           // Assign instrument3[2] to the key "instrument3_Note3" in the json object 
 
-    p5Send.prettyPrintTo(Serial);                           // Print JSON object as a string
+    p5Send.printTo(Serial);                                 // Print JSON object as a string
     Serial.println();                                       // Print a \n character to the serial port to distinguish between objects
     
-    dataLastRead = millis();
+    lastRead = millis();
   }
 }
